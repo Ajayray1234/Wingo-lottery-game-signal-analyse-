@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lottery Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        #joinMessage {
+            font-weight: bold;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <p id="joinMessage">कृपया <a href="https://t.me/VIPpredictionmodfree" target="_blank">यहां क्लिक करके टेलीग्राम चैनल में जुड़ें</a> (यह कदम वैकल्पिक है, आप स्क्रिप्ट का उपयोग बिना जुड़े भी कर सकते हैं)।</p>
+
+    <h2>लॉटरी भविष्यवाणी</h2>
+    <p>5 अंक दर्ज करें (उदाहरण: 12345)। 'exit' लिखकर बाहर निकल सकते हैं।</p>
+
+    <input type="text" id="userInput" placeholder="5 अंक दर्ज करें" />
+    <button id="predictButton" onclick="predictResult()">भविष्यवाणी करें</button>
+
+    <div id="result"></div>
+    <div id="history"></div>
+
+    <script>
+        let history = [];
+
+        // नंबरों को BIG या SMALL के रूप में वर्गीकृत करना
+        function classifyNumbers(numbers) {
+            return numbers.map(num => num <= 4 ? "SMALL" : "BIG");
+        }
+
+        // मूविंग एवरेज (Moving Average) की गणना
+        function movingAverage(numbers, n = 3) {
+            if (numbers.length < n) {
+                return numbers.reduce((a, b) => a + b, 0) / numbers.length;
+            }
+            return numbers.slice(-n).reduce((a, b) => a + b, 0) / n;
+        }
+
+        // एक्सपोनेंशियल मूविंग एवरेज (EMA) की गणना
+        function exponentialMovingAverage(numbers, alpha = 0.1) {
+            let ema = numbers[0];
+            for (let i = 1; i < numbers.length; i++) {
+                ema = alpha * numbers[i] + (1 - alpha) * ema;
+            }
+            return ema;
+        }
+
+        // वेटेड एवरेज (Weighted Average) की गणना
+        function weightedAverage(numbers, n = 3) {
+            if (numbers.length < n) {
+                return numbers.reduce((a, b) => a + b, 0) / numbers.length;
+            }
+            let weights = Array.from({length: n}, (_, i) => i + 1);
+            let weightedAvg = numbers.slice(-n).reduce((sum, num, idx) => sum + num * weights[idx], 0);
+            return weightedAvg / weights.reduce((sum, weight) => sum + weight, 0);
+        }
+
+        // नंबरों के बीच का अंतर निकालना
+        function calculateDifference(numbers) {
+            let differences = [];
+            for (let i = 1; i < numbers.length; i++) {
+                differences.push(Math.abs(numbers[i] - numbers[i - 1]));
+            }
+            return differences.reduce((sum, diff) => sum + diff, 0) % 2 === 0 ? "SMALL" : "BIG";
+        }
+
+        // अगले परिणाम की भविष्यवाणी करना
+        function calculateNextResult(history, numbers) {
+            let maPrediction = movingAverage(numbers);
+            if (maPrediction % 2 === 0) {
+                return "SMALL";
+            }
+
+            let emaPrediction = exponentialMovingAverage(numbers);
+            if (emaPrediction % 2 === 0) {
+                return "SMALL";
+            }
+
+            let waPrediction = weightedAverage(numbers);
+            if (waPrediction % 2 === 0) {
+                return "SMALL";
+            }
+
+            let diffPrediction = calculateDifference(numbers);
+            return diffPrediction;
+        }
+
+        // भविष्यवाणी पर आधारित परिणाम दिखाना
+        function predictResult() {
+            let userInput = document.getElementById("userInput").value.trim();
+            if (userInput.toLowerCase() === "exit") {
+                alert("कार्यक्रम से बाहर निकल रहे हैं। अलविदा!");
+                return;
+            }
+
+            if (userInput.length !== 5 || !/^\d+$/.test(userInput)) {
+                alert("अमान्य इनपुट। कृपया ठीक से 5 अंक दर्ज करें।");
+                return;
+            }
+
+            let numbers = userInput.split('').map(Number);
+            let classifiedResults = classifyNumbers(numbers);
+            document.getElementById("result").innerHTML = `वर्गीकृत परिणाम: ${classifiedResults.join(', ')}`;
+
+            let nextResult = calculateNextResult(history, numbers);
+            document.getElementById("result").innerHTML += `<br>अगली भविष्यवाणी: ${nextResult}`;
+
+            history.push(nextResult);
+            document.getElementById("history").innerHTML = `<strong>भविष्यवाणी इतिहास:</strong> ${history.join(', ')}`;
+        }
+    </script>
+
+</body>
+</html>
